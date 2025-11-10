@@ -276,6 +276,10 @@ void Keela::CameraControlWindow::remove_split_frame_ui() {
     }
 }
 
+void Keela::CameraControlWindow::init_aravis_controller() {
+    camera_manager->init_aravis_controller();
+}
+
 void Keela::CameraControlWindow::update_gain_range() {
     // get the range supported by the camera hardware
     auto gain_range = camera_manager->get_gain_range();

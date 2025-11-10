@@ -90,116 +90,36 @@ void Keela::CameraManager::set_experiment_directory(const std::string &path) {
     experiment_directory = path;
 }
 
-std::pair<double, double> Keela::CameraManager::get_gain_range() const {
-    double min_gain = 0.0;
-    double max_gain = 0.0;
-
+void Keela::CameraManager::init_aravis_controller() {
     ArvCamera *aravis_camera = get_aravis_camera();
     if (aravis_camera == nullptr) {
-        spdlog::warn("Gain control not supported");
-        return {min_gain, max_gain};
+        spdlog::error("Failed to get ArvCamera from aravissrc element");
+        throw std::runtime_error("ArvCamera is null");
     }
+    aravis_controller = new AravisController(aravis_camera);
+    spdlog::info("Initialized AravisController for camera {}", id);
+}
 
-    spdlog::debug("Querying gain range from camera hardware via ArvCamera object");
-
-    GError *error = nullptr;
-    // Query the actual hardware gain limits
-    arv_camera_get_gain_bounds(aravis_camera, &min_gain, &max_gain, &error);
-    if (error == nullptr) {
-        spdlog::info("Queried hardware gain range from camera: {:.1f} to {:.1f} dB", min_gain, max_gain);
-    } else {
-        spdlog::warn("Error querying gain range from camera: {}", error->message);
-        g_error_free(error);
-    }
-
-    g_object_unref(aravis_camera);
-
-    return {min_gain, max_gain};
+std::pair<double, double> Keela::CameraManager::get_gain_range() const {
+    return aravis_controller->get_gain_range();
 }
 
 std::pair<double, double> Keela::CameraManager::get_exposure_time_range() const {
-    double min_exposure = 0.0;
-    double max_exposure = 0.0;
-
-    ArvCamera *aravis_camera = get_aravis_camera();
-    if (aravis_camera == nullptr) {
-        spdlog::warn("Exposure time control not supported");
-        return {min_exposure, max_exposure};
-    }
-
-    spdlog::debug("Querying exposure time range from camera hardware via ArvCamera object");
-
-    GError *error = nullptr;
-    // Query the actual hardware exposure time limits
-    arv_camera_get_exposure_time_bounds(aravis_camera, &min_exposure, &max_exposure, &error);
-    if (error == nullptr) {
-        spdlog::info("Queried hardware exposure time range from camera: {:.1f} to {:.1f} us", min_exposure, max_exposure);
-    } else {
-        spdlog::warn("Error querying exposure time range from camera: {}", error->message);
-        g_error_free(error);
-    }
-
-    return {min_exposure, max_exposure};
+    return aravis_controller->get_exposure_time_range();
 }
 
 void Keela::CameraManager::set_gain(double gain) {
-    spdlog::info("Setting camera gain to {}", gain);
-
-    ArvCamera *aravis_camera = get_aravis_camera();
-
-    GError *error = nullptr;
-    arv_camera_set_gain(aravis_camera, gain, &error);
-
-    if (error != nullptr) {
-        spdlog::error("Error setting gain on camera: {}", error->message);
-        g_error_free(error);
-        return;
-    }
-
-    // Read back the actual gain value to confirm it was set
-    gdouble actual_gain = arv_camera_get_gain(aravis_camera, &error);
-
-    if (error != nullptr) {
-        spdlog::error("Error getting gain from camera: {}", error->message);
-        g_error_free(error);
-        return;
-    }
-
-    spdlog::info("Set gain to {:.1f} dB, actual camera gain: {:.1f} dB",
-                 gain, actual_gain);
+    aravis_controller->set_gain(gain);
 }
 
 void Keela::CameraManager::set_exposure_time(double exposure) {
-    spdlog::info("Setting camera exposure time to {}", exposure);
-
-    ArvCamera *aravis_camera = get_aravis_camera();
-
-    GError *error = nullptr;
-    arv_camera_set_exposure_time(aravis_camera, exposure, &error);
-
-    if (error != nullptr) {
-        spdlog::error("Error setting exposure time on camera: {}", error->message);
-        g_error_free(error);
-        return;
-    }
-    // Read back the actual exposure time value to confirm it was set
-    gdouble actual_exposure = arv_camera_get_exposure_time(aravis_camera, &error);
-    if (error != nullptr) {
-        spdlog::error("Error getting exposure time from camera: {}", error->message);
-        g_error_free(error);
-        return;
-    }
-    spdlog::info("Set exposure time to {:.1f} us, actual camera exposure time: {:.1f} us",
-                 exposure, actual_exposure);
+    aravis_controller->set_exposure_time(exposure);
 }
 
 ArvCamera *Keela::CameraManager::get_aravis_camera() const {
-    if (aravis_camera != nullptr) {
-        return aravis_camera;
-    }
-
     GstElement *camera_element = static_cast<GstElement *>(camera);
     // Try to get the underlying ArvCamera object from aravissrc
+    ArvCamera* aravis_camera = nullptr;
     g_object_get(camera_element, "camera", &aravis_camera, nullptr);
     return aravis_camera;
 }

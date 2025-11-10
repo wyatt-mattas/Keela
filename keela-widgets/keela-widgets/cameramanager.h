@@ -4,7 +4,7 @@
 
 #ifndef CAMERAMANAGER_H
 #define CAMERAMANAGER_H
-#include <arv.h>
+#include <aravis-0.8/arv.h>
 #include <keela-pipeline/CameraStreamBin.h>
 #include <keela-pipeline/bin.h>
 #include <keela-pipeline/caps.h>
@@ -13,6 +13,7 @@
 #include <keela-pipeline/simpleelement.h>
 #include <keela-pipeline/snapshotbin.h>
 #include <keela-pipeline/transformbin.h>
+#include <keela-widgets/AravisController.h>
 
 #include <atomic>
 #include <set>
@@ -34,13 +35,16 @@ namespace Keela {
 
         ~CameraManager() override;
 
-        void set_pix_fmt(const std::string &format);
+        void set_pix_fmt(const std::string& format);
 
         void set_framerate(double framerate);
 
         void set_resolution(int width, int height);
 
-        void set_experiment_directory(const std::string &path);
+        void set_experiment_directory(const std::string& path);
+
+        // Creates the AravisController once pipeline is in PLAYING state and we have access to the camera hardware
+        void init_aravis_controller();
 
         // Query hardware capabilities
         std::pair<double, double> get_gain_range() const;
@@ -129,7 +133,11 @@ namespace Keela {
 
         ArvCamera *get_aravis_camera() const;
 
-        ArvCamera *aravis_camera = nullptr;
+        /**
+         * Manages Aravis camera hardware settings like querying for
+         * hardware capabilities and adjusting camera parameters.
+         */
+        AravisController *aravis_controller = nullptr;
     };
 }  // namespace Keela
 #endif  // CAMERAMANAGER_H

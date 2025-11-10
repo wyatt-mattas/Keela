@@ -93,6 +93,11 @@ MainWindow::MainWindow(): Gtk::Window() {
 
     // Query hardware capabilities to set ranges in the UI
     for (const auto &camera : cameras) {
+        // Must be called after pipeline is in PLAYING state.
+        // GStreamer elements are lazy and don't initialize hardware connections until pipeline starts playing.
+        // We need access to the aravis camera to query supported ranges.
+        camera->init_aravis_controller();
+
         camera->update_gain_range();
         camera->update_exposure_time_range();
     }
