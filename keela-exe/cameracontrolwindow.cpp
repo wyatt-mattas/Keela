@@ -44,6 +44,11 @@ Keela::CameraControlWindow::CameraControlWindow(const guint id, std::string pix_
     exposure_time_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_exposure_time_changed));
     v_container.add(exposure_time_spin);
 
+    // Binning controls
+    bin_spin.m_spin.set_sensitive(false);
+    bin_spin.m_spin.signal_value_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_bin_spin_changed));
+    v_container.add(bin_spin);
+
     // TODO: add rotation options
     rotation_combo.m_combo.signal_changed().connect(sigc::mem_fun(*this, &CameraControlWindow::on_rotation_changed));
     rotation_combo.m_combo.append(ROTATION_NONE, "---");
@@ -112,6 +117,12 @@ void Keela::CameraControlWindow::on_exposure_time_changed() const {
     const auto exposure_time = exposure_time_spin.m_spin.get_value();
     spdlog::info("Exposure time changed to {}", exposure_time);
     camera_manager->set_exposure_time(exposure_time);
+}
+
+void Keela::CameraControlWindow::on_bin_spin_changed() const {
+    const auto binning_factor = static_cast<int>(bin_spin.m_spin.get_value());
+    spdlog::info("Binning factor changed to {}", binning_factor);
+    camera_manager->set_binning_factors(binning_factor);
 }
 
 void Keela::CameraControlWindow::set_resolution(const int width, const int height) {
@@ -278,6 +289,7 @@ void Keela::CameraControlWindow::remove_split_frame_ui() {
 
 void Keela::CameraControlWindow::init_aravis_controller() {
     camera_manager->init_aravis_controller();
+    // @todo: add binning mode methods, set to 'average'
 }
 
 void Keela::CameraControlWindow::update_gain_range() {
@@ -300,11 +312,9 @@ void Keela::CameraControlWindow::update_gain_range() {
 
 void Keela::CameraControlWindow::update_exposure_time_range() {
     // get the range supported by the camera hardware
-    auto exposure_time_range = camera_manager->get_exposure_time_range();
-    double min_exposure_time = exposure_time_range.first;
-    double max_exposure_time = exposure_time_range.second;
+    auto [min_exposure_time, max_exposure_time] = camera_manager->get_exposure_time_range();
 
-    if (min_exposure_time == 0.0 && max_exposure_time == 0.0) {
+    if (std::isnan(min_exposure_time)) {
         exposure_time_spin.m_spin.set_sensitive(false);
         spdlog::warn("Exposure time control not supported by camera - disabling exposure time control UI");
         return;
@@ -314,4 +324,21 @@ void Keela::CameraControlWindow::update_exposure_time_range() {
     exposure_time_spin.m_spin.set_sensitive(true);
 
     spdlog::info("Updated exposure time control range to {:.1f} - {:.1f} μs", min_exposure_time, max_exposure_time);
+}
+
+void Keela::CameraControlWindow::update_binning_range() {
+    // get the range supported by the camera hardware, only using x
+    auto [min_x_binning, max_x_binning, min_y_binning, max_y_binning] = camera_manager->get_binning_bounds();
+    auto [x_binning_increment, y_binning_increment] = camera_manager->get_binning_increments();
+
+    if (std::isnan(min_x_binning == 1)) {
+        bin_spin.m_spin.set_sensitive(false);
+        spdlog::warn("Binning control not supported by camera - disabling binning control UI");
+        return;
+    }
+    // update the binning spin with the new range
+    bin_spin.m_spin.set_adjustment(Gtk::Adjustment::create(min_x_binning, min_x_binning, max_x_binning, x_binning_increment));
+    bin_spin.m_spin.set_sensitive(true);
+
+    spdlog::info("Updated binning factor control range to {} - {}", min_x_binning, max_x_binning);
 }

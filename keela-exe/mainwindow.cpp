@@ -115,6 +115,7 @@ MainWindow::MainWindow() : Gtk::Window() {
 
         camera->update_gain_range();
         camera->update_exposure_time_range();
+        camera->update_binning_range();
     }
 
     show_all_children();

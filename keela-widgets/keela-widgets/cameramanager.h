@@ -49,10 +49,19 @@ namespace Keela {
 
         std::pair<double, double> get_exposure_time_range() const;
 
+        std::tuple<int, int, int, int> get_binning_bounds() const;
+
+        std::pair<int, int> get_binning_increments() const;
+
         // Control hardware settings
         void set_gain(double gain);
 
         void set_exposure_time(double exposure);
+
+        void set_binning_factors(int binning_factor_both);
+        void set_binning_factors(int binning_factor_x, int binning_factor_y);
+
+        // void set_binning_mode();
 
         void start_recording();
 

@@ -108,12 +108,28 @@ std::pair<double, double> Keela::CameraManager::get_exposure_time_range() const 
     return aravis_controller->get_exposure_time_range();
 }
 
+std::tuple<int, int, int, int> Keela::CameraManager::get_binning_bounds() const {
+    return aravis_controller->get_binning_bounds();
+}
+
+std::pair<int, int> Keela::CameraManager::get_binning_increments() const {
+    return aravis_controller->get_binning_increments();
+}
+
 void Keela::CameraManager::set_gain(double gain) {
     aravis_controller->set_gain(gain);
 }
 
 void Keela::CameraManager::set_exposure_time(double exposure) {
     aravis_controller->set_exposure_time(exposure);
+}
+
+void Keela::CameraManager::set_binning_factors(int binning_factor) {
+    aravis_controller->set_binning_factors(binning_factor);
+}
+
+void Keela::CameraManager::set_binning_factors(int binning_factor_x, int binning_factor_y) {
+    aravis_controller->set_binning_factors(binning_factor_x, binning_factor_y);
 }
 
 ArvCamera *Keela::CameraManager::get_aravis_camera() const {

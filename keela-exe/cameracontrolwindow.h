@@ -38,9 +38,10 @@ namespace Keela {
         Keela::LabeledSpinButton range_min_spin = Keela::LabeledSpinButton("Minimum");
         Keela::LabeledSpinButton range_max_spin = Keela::LabeledSpinButton("Maximum");
 
-        // TODO: histogram
         Keela::LabeledSpinButton gain_spin = Keela::LabeledSpinButton("Gain (dB)");
         Keela::LabeledSpinButton exposure_time_spin = Keela::LabeledSpinButton("Exposure Time (μs)");
+        Keela::LabeledSpinButton bin_spin = Keela::LabeledSpinButton("Binning Factor");
+        Gtk::ComboBoxText drop_down = Gtk::ComboBoxText("Sum");
 
         Keela::LabeledComboBoxText rotation_combo = Keela::LabeledComboBoxText("Select Rotation");
         Gtk::CheckButton flip_horiz_check = Gtk::CheckButton("Flip Along Horizontal Center");
@@ -57,6 +58,8 @@ namespace Keela {
         void on_gain_changed() const;
 
         void on_exposure_time_changed() const;
+
+        void on_bin_spin_changed() const;
 
         void on_rotation_changed();
 
@@ -85,6 +88,9 @@ namespace Keela {
 
         // Update exposure time range after camera is ready
         void update_exposure_time_range();
+
+        // 
+        void update_binning_range();
 
     private:
         std::vector<std::shared_ptr<CameraTrace>> m_traces;
